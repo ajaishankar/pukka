@@ -9,9 +9,9 @@ It aims to completely separate schema from validation. Unlike other libraries, w
 
 You're free to do your validations, your way... in a single place!
 
-pukka simplifies common data validation tasks - trim strings, deserialize nested form data, render form fields with errors, data coercion, async validation, reuse schema on browser and server, error message customization and internationalization.
+pukka simplifies common data validation tasks - trim strings, conditional validation, async validation, deserialize nested form data, render form fields with errors, data coercion, reuse schema on browser and server, error message customization, internationalization, or even partial validation!
 
-Designed to be extensible, pukka makes is easy to add new types or even implement field level zod like validators!
+Designed to be extensible, pukka makes it easy to add new types or even implement field level zod like validators!
 
 ## Declare schema and validations
 
@@ -43,7 +43,7 @@ On error, pukka returns a list of issues, and also the input and issues for each
 
 This makes it easy to render say a Remix form with field level errors.
 
-### safeParse
+### safeParse / safeParseAsync
 
 ```ts
 const { success, data, issues, input } = Register.safeParse({
@@ -59,7 +59,7 @@ if (success) {
 }
 ```
 
-### parse
+### parse / parseAsync
 
 ```ts
 try {
@@ -113,6 +113,25 @@ input = {
 };
 ```
 
+## Partial Validation 
+
+With pukka, you don't need to run the whole validation suite to validate a field on change.
+
+```ts
+const handleEmailChange = (e) => {
+  const { issues } = Register.properties.email.safeParse(e.target.value);
+};
+
+// or if the schema is unknown (a generic ui form library)
+
+import { getPathType } from "pukka";
+
+const handleEmailChange = (e) => {
+  const email = getPathType(schema, ["email"]);
+  const { issues } = email.safeParse(e.target.value);
+};
+```
+
 ## Infer
 
 Typescript first - pukka!
@@ -133,7 +152,7 @@ type Register = {
 
 Sorry, none.
 
-Because [validator.js](https://github.com/validatorjs/validator.js) probably has more than what we need.
+Because [validator.js](https://github.com/validatorjs/validator.js) probably has more than what we ever need.
 
 ```ts
 import isEmail from "validator/lib/isEmail";
@@ -532,3 +551,16 @@ schema.refine((ctx, data) => {
   ctx.issue(data.email.length === 0, "Please enter your email") // works
 })
 ```
+
+## Inspiration (prior art)
+
+[zod](https://valibot.dev/) - obviously, and [valibot](https://valibot.dev/).
+
+pukka favors simplicity over type purity.
+
+That is, no lazy recursive types, intersection types, pick, merge, input vs output schemas, pipes etc.
+
+If all you want to do is validate forms or api payloads in a natural, typesafe way, give pukka a try.
+I am sure you'll love it...
+
+It is lot of goodness packed in a tiny extensible codebase!
