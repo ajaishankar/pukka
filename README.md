@@ -5,7 +5,7 @@
 
 pukka is a Typescript schema-first, zod compatible, headless validation library.
 
-It aims to completely separate schema from validation. Unlike other libraries, with pukka there is no need for field level validation chains.
+It aims to completely separate schema from validation. With pukka, unlike other libraries, there is no need for field level validation chains.
 
 You're free to do your validations, your way... in a single place!
 
@@ -113,7 +113,7 @@ input = {
 };
 ```
 
-## Partial Validation 
+## Partial validation 
 
 With pukka, you don't need to run the whole validation suite to validate a field on change.
 
@@ -328,7 +328,7 @@ type ParseOptions = {
   string?: {
     coerce?: boolean; // anything other than objects & arrays to string
     trim?: boolean; // strings are trimmed by default, override it here
-    empty?: boolean; // if false empty strings result in a required error
+    empty?: boolean; // if false, empty strings result in a required error
   };
   number?: {
     coerce?: boolean; // string to number
@@ -454,7 +454,7 @@ export class EmailType extends types.StringType {
 
 ### Adding schema extensions
 
-The following adds a min method to the StringType.
+The following adds a *min* method to the StringType.
 
 ```ts
 import { type MessageOverride, types } from "pukka";
@@ -560,7 +560,6 @@ pukka favors simplicity over type purity.
 
 That is, no lazy recursive types, intersection types, pick, merge, input vs output schemas, pipes etc.
 
-If all you want to do is validate forms or api payloads in a natural, typesafe way, give pukka a try.
-I am sure you'll love it...
+If all you want to do is validate forms and api payloads in a natural, typesafe way, do give pukka a try.
 
-It is lot of goodness packed in a tiny extensible codebase!
+I am sure you'll love it - it is a lot of goodness packed in a tiny extensible codebase!
