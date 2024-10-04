@@ -9,7 +9,7 @@ It aims to completely separate schema from validation. With pukka, unlike other 
 
 You're free to do your validations, your way... in a single place!
 
-pukka simplifies common data validation tasks - trim strings, conditional validation, async validation, deserialize nested form data, render form fields with errors, data coercion, reuse schema on browser and server, error message customization, internationalization, or even partial validation!
+pukka simplifies common data validation tasks - trim strings, data coercion, conditional validation, async validation, deeply nested field validation, external dependencies during validation, deserialize nested form data, render form fields with errors, schema reuse on browser and server, error message customization, internationalization, or even partial validation!
 
 Designed to be extensible, pukka makes it easy to add new types or even implement field level zod like validators!
 
@@ -35,13 +35,17 @@ const Register = z
   });
 ```
 
+On validation error, pukka automatically tags each field with its issues!
+
+There is no need to explicity specify the error field path.
+
 ## Parse
 
 As with zod, call parse or safeParse.
 
 On error, pukka returns a list of issues, and also the input and issues for each field!
 
-This makes it easy to render say a Remix form with field level errors.
+This makes it easy to render say a [Remix](https://remix.run/docs/en/main/guides/form-validation#step-3-displaying-validation-errors) form with field level errors.
 
 ### safeParse / safeParseAsync
 
@@ -558,8 +562,8 @@ schema.refine((ctx, data) => {
 
 pukka favors simplicity over type purity.
 
-That is, no lazy recursive types, intersection types, pick, merge, input vs output schemas, pipes etc.
+That is, no lazy recursive types, intersection types, pick, merge, input vs output schemas, pipes, preprocess, transform etc.
 
 If all you want to do is validate forms and api payloads in a natural, typesafe way, do give pukka a try.
 
-I am sure you'll love it - it is a lot of goodness packed in a tiny extensible codebase!
+I am sure you'll love it - it's a lot of goodness packed in a tiny extensible codebase!
