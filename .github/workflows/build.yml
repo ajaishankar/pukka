@@ -29,3 +29,9 @@ jobs:
     - run: npm run build --if-present
     - run: npm run typecheck
     - run: npm test
+    - name: Run coverage
+      run: npm run coverage
+    - name: Upload to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}

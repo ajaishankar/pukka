@@ -1,3 +1,6 @@
+[![version(scoped)](https://img.shields.io/npm/v/pukka.svg)](https://www.npmjs.com/package/pukka)
+[![codecov](https://codecov.io/gh/ajaishankar/pukka/graph/badge.svg?token=2O9DD5SEUJ)](https://codecov.io/gh/ajaishankar/pukka)
+
 # pukka!
 
 pukka is a Typescript schema-first, zod compatible, headless validation library.
