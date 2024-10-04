@@ -193,7 +193,7 @@ In fact it was kind of born from a [long running issue](https://github.com/colin
 
 It also plays real nice with [ParaglideJS](https://inlang.com/m/gerre34r/library-inlang-paraglideJs) i18n.
 
-The core issues (invalid_type_error, required_error) can be overriden at a field level.
+The core issues *invalid_type_error, required_error* can be overriden at a field level.
 
 ```ts
 const Register = z.object({
@@ -518,7 +518,7 @@ if (ctx.isDefined(data.password) && data.password.length < 8) {
 
 Rule of thumb - try to avoid!
 
-pukka tracks property access using a proxy, and assigns ctx.issue() to the last accessed field.
+pukka tracks property access using a proxy, and assigns *ctx.issue()* to the last accessed field.
 
 So destructuring scalars won't work as expected.
 
