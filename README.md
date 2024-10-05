@@ -13,7 +13,12 @@ pukka simplifies common data validation tasks - trim strings, data coercion, con
 
 Designed to be extensible, pukka makes it easy to add new types or even implement field level zod like validators!
 
-## Declare schema and validations
+## Install
+```
+npm install pukka
+```
+
+## Usage
 
 Define a schema as usual, and consolidate validations.
 
@@ -33,6 +38,12 @@ const Register = z
       ctx.issue("Passwords don't match");
     }
   });
+
+const data = Register.parse({ password: "secret" });
+
+const { success, data, issues, input } = Register.safeParse({
+  password: "secret",
+});
 ```
 
 On validation error, pukka automatically tags each field with its issues!
@@ -50,7 +61,7 @@ schema.optional()
 schema.nullable()
 
 schema.refine((ctx, data) => {...})
-schema.refineAsync((ctx, data) => {...})
+schema.refineAsync(async (ctx, data) => {...})
 
 schema.parse(input, options)
 schema.parseAsync(input, options)
