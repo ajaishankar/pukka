@@ -78,11 +78,15 @@ schema.refine((ctx, data) => {
 
   ctx.path // ["foo", "bar", 0]
   ctx.issue("major issue") // raise an issue
-  ctx.issue("severe", "major issue") // issue with code & message
-  ctx.issue("severe", "major issue", ["foo"]) // issue with code, message & path
   ctx.pathFor(data.foo) // ["foo"]
   ctx.isDefined(data.foo) // data.foo != null
   ctx.get<T>("prop") // get a runtime property
+
+  // with a few overloads for ctx.issue(...)
+  ctx.issue(() => "major issue") // function (eg ParaglideJS - m.major_issue)
+  ctx.issue(condition, "major issue") // raise issue only if condition is true
+  ctx.issue("severe", "major issue") // issue with code & message
+  ctx.issue("severe", "major issue", ["foo"]) // issue with code, message & path
 })
 ```
 
