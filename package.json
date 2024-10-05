@@ -1,6 +1,6 @@
 {
   "name": "pukka",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Typescript schema-first zod compatible hyper validation",
   "repository": {
     "type": "git",
@@ -9,16 +9,23 @@
   "license": "MIT",
   "author": "Ajai Shankar",
   "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": {
+    "import": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "require": {
+      "types": "./dist/index.d.cts",
+      "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist/index.js", "dist/index.d.ts"],
+  "files": ["dist"],
   "scripts": {
     "prebuild": "npm run clean",
-    "build": "tsup src/index.ts --dts --format esm",
+    "build": "tsup src/index.ts --dts --format esm,cjs",
     "clean": "rimraf dist",
     "format": "biome format . --write",
     "lint": "biome lint . --write",
