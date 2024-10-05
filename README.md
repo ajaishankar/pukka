@@ -39,6 +39,87 @@ On validation error, pukka automatically tags each field with its issues!
 
 There is no need to explicity specify the error field path.
 
+## API
+
+pukka has just a handful of APIs.
+
+Every schema has the following methods.
+
+```ts
+schema.optional()
+schema.nullable()
+
+schema.refine((ctx, data) => {...})
+schema.refineAsync((ctx, data) => {...})
+
+schema.parse(input, options)
+schema.parseAsync(input, options)
+
+schema.safeParse(input, options)
+schema.safeParseAsync(input, options)
+```
+
+And the following are available on the context.
+
+```ts
+schema.refine((ctx, data) => {
+  data.foo.bar[0] // access a field
+
+  ctx.path // ["foo", "bar", 0]
+  ctx.issue("major issue") // raise an issue
+  ctx.issue("severe", "major issue") // issue with code & message
+  ctx.issue("severe", "major issue", ["foo"]) // issue with code, message & path
+  ctx.pathFor(data.foo) // ["foo"]
+  ctx.isDefined(data.foo) // data.foo != null
+  ctx.get<T>("prop") // get a runtime property
+})
+```
+
+## Types
+
+Though it's very easy to [add types](./src/types.ts), the list of supported types is intentionally kept simple.
+
+```ts
+z.string()
+z.string().optional() // string | undefined
+z.string().nullable() // string | null
+z.number()
+z.boolean()
+z.enum(["ordered", "shipped"])
+z.enum(["ordered", "shipped"] as const) // as needed
+z.file()
+z.literal(...)
+  z.literal(true)
+  z.literal(1)
+  z.literal("type")
+z.record(z.number()) // { jan: 1, feb: 2 }
+z.array(z.string())
+z.array(z.string(), { coerce: true }) // parse("a") => [ "a" ]
+z.object({
+  name: z.string(),
+  age: z.number(),
+  interests: z.array(z.string())
+})
+z.union([
+  z.object({
+    success: z.literal(true),
+    data: z.object({
+      name: z.string(),
+    }),
+  }),
+  z.object({
+    success: z.literal(false),
+    issues: z.array(
+      z.object({
+        code: z.string(),
+        message: z.string(),
+        path: z.array(z.number()),
+      }),
+    ),
+  }),
+]);
+```
+
 ## Parse
 
 As with zod, call parse or safeParse.
@@ -274,55 +355,6 @@ CORE_ISSUES.customize({
 });
 ```
 
-## Types
-
-Though it's very easy to [add types](./src/types.ts), the list of supported types is intentionally kept simple.
-
-pukka is meant to validate data that is posted from a form or an api.
-
-So no recursive types for now.
-
-```ts
-z.string()
-z.string().optional() // string | undefined
-z.string().nullable() // string | null
-z.number()
-z.boolean()
-z.enum(["ordered", "shipped"])
-z.enum(["ordered", "shipped"] as const) // as needed
-z.file()
-z.literal(...)
-  z.literal(true)
-  z.literal(1)
-  z.literal("type")
-z.record(z.number()) // { jan: 1, feb: 2 }
-z.array(z.string())
-z.array(z.string(), { coerce: true }) // parse("a") => [ "a" ]
-z.object({
-  name: z.string(),
-  age: z.number(),
-  interests: z.array(z.string())
-})
-z.union([
-  z.object({
-    success: z.literal(true),
-    data: z.object({
-      name: z.string(),
-    }),
-  }),
-  z.object({
-    success: z.literal(false),
-    issues: z.array(
-      z.object({
-        code: z.string(),
-        message: z.string(),
-        path: z.array(z.number()),
-      }),
-    ),
-  }),
-]);
-```
-
 ## Type coercion and sanitization
 
 The following options can be passed to parse and can be overriden per schema
@@ -354,38 +386,6 @@ schema.parse({
 })
 ```
 
-## API
-
-pukka strives to be minimal and has just a handful of APIs.
-
-Every schema has the following methods.
-
-```ts
-schema.optional()
-schema.nullable()
-schema.parse(input, options)
-schema.parseAsync(input, options)
-schema.safeParse(input, options)
-schema.safeParseAsync(input, options)
-schema.refine((ctx, data) => {...})
-schema.refineAsync((ctx, data) => {...})
-```
-
-And the following are available on the context.
-
-```ts
-schema.refine((ctx, data) => {
-  data.foo.bar // access a prop
-
-  ctx.path // ["foo", "bar"]
-  ctx.isDefined(data.foo) // data.foo != null
-  ctx.issue("major issue") // raise an issue
-  ctx.issue("severe", "major issue") // issue with code
-  ctx.issue("severe", "major issue", ["foo"]) // issue with code & path
-  ctx.pathFor(data.foo) // ["foo"]
-  ctx.get<T>("prop") // get a runtime property
-})
-```
 ## Helpers
 
 ### DeepObject.fromEntries(FormData | URLSearchParams)
@@ -477,7 +477,7 @@ export class StringExtensions extends types.StringType {
 }
 ```
 
-### Register and use the new type and extension.
+### Register and use the new type and extension
 
 ```ts
 
