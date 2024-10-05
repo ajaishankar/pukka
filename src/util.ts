@@ -42,11 +42,12 @@ export function toParsedInput<T>(
         result[prop] = getResult([...path, prop], item);
       }
     } else if (Array.isArray(value)) {
-      result = [] as any[];
+      result = {
+        value: [] as any[],
+      };
       for (let i = 0; i < value.length; ++i) {
-        result[i] = getResult([...path, i], value[i]);
+        result.value[i] = getResult([...path, i], value[i]);
       }
-      result.toJSON = () => [...result, { issues: result.issues }];
     } else {
       result = {
         parsed: input.parsed ? value : undefined,

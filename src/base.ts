@@ -50,12 +50,17 @@ export type ParsedInputValue<T> = {
   issues: Omit<Issue, "path">;
 };
 
-export type ParsedInput<T, N = NonNullable<T>> = N extends Record<string, any>
+export type ParsedInput<T, N = NonNullable<T>> = N extends any[]
   ? {
-      [K in keyof N]-?: ParsedInput<N[K]>;
-    } & { issues: Omit<Issue, "path"> }
-  : N extends any[]
-    ? ParsedInput<N[number]>[] & { issues: Omit<Issue, "path"> }
+      value: ParsedInput<N[number]>[];
+      issues: Omit<Issue, "path">;
+    }
+  : N extends Record<string, any>
+    ? {
+        [K in keyof N]-?: ParsedInput<N[K]>;
+      } & {
+        issues: Omit<Issue, "path">;
+      }
     : ParsedInputValue<T>;
 
 export type CoreIssueOverrides = {

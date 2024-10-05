@@ -28,16 +28,10 @@ test("toParsedInput", () => {
 
   expect(data.name).toEqual({ parsed: "homer", value: "homer", issues: [] });
   expect(data.issues).toEqual([]);
-  expect(data.children[0]).toEqual(children[0]);
-  expect(data.children[1]).toEqual(children[1]);
-  expect(data.children[2]).toEqual(children[2]);
+  expect(data.children.value[0]).toEqual(children[0]);
+  expect(data.children.value[1]).toEqual(children[1]);
+  expect(data.children.value[2]).toEqual(children[2]);
   expect(data.children.issues).toEqual([]);
-
-  // issues at array level are added as an item to assist debugging
-  const json = JSON.parse(JSON.stringify(data));
-  expect(json.children).toContainEqual({
-    issues: [],
-  });
 });
 
 describe("DeepObject.fromEntries", () => {
