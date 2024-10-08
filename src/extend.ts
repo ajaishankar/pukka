@@ -7,6 +7,7 @@ import type {
   Validator,
 } from "./base";
 import { internalType } from "./internal";
+import type { Simplify } from "./util";
 
 type TypeConstructor<T extends BaseType = BaseType> = new (...args: any[]) => T;
 
@@ -28,11 +29,17 @@ type Extensions<T> = {
   };
 };
 
-export type Extended<T extends BaseType, X extends Extensions<Infer<T>>> = T & {
+/**
+ * Chainable extension methods with optional message override param
+ */
+type ChainableExtensions<
+  T extends BaseType,
+  X extends Extensions<Infer<T>>,
+> = Simplify<{
   [K in Exclude<keyof X, keyof T>]: (
     ...args: [...Parameters<X[K]>, override?: MessageOverride<Infer<T>>]
-  ) => Extended<T, X>;
-};
+  ) => T & ChainableExtensions<T, X>;
+}>;
 
 /**
  * Helper to register a type with a constructor taking a single object parameter
@@ -108,15 +115,14 @@ function applyExtensions<
   }
 
   type I = InstanceType<C>;
-  type Ext = Extended<I, X>;
 
   return <F extends (...args: any[]) => I>(fn: F) =>
-    fn as (...args: Parameters<F>) => I & Ext;
+    fn as (...args: Parameters<F>) => I & ChainableExtensions<I, X>;
 }
 
 function getExtensionParams<
   T extends BaseType,
-  X extends Extensions<Infer<T>>,
+  X extends Extensions<NonNullable<Infer<T>>>,
   M extends keyof X,
 >(type: T, ext: X, name: M) {
   type P = Parameters<X[M]>;

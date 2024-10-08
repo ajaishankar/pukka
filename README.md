@@ -485,8 +485,6 @@ const StringExtensions1 = Extensions.for(types.StringType, {
     data.length >= length ||
     ctx.issue(`Value must be at least ${length} characters`),
   max: ...,
-  contains: ...,
-  matches: ...,
 });
 
 // or async - say check username availability
@@ -578,13 +576,22 @@ schema.refine((ctx, data) => {
 })
 ```
 
+### Extensions and optional/nullable
+
+Optional and nullable need to be specified last with extensions.
+
+```ts
+z.string().min(2).optional() // correct: string | undefined
+z.string().optional().min(2) // incorrect: string
+```
+
 ## Inspiration (prior art)
 
 [zod](https://valibot.dev/) - obviously, and [valibot](https://valibot.dev/).
 
-pukka favors simplicity over type purity.
+pukka favors simplicity over feature bloat.
 
-That is, no lazy recursive types, intersection types, pick, merge, input vs output schemas, pipes, preprocess, transform etc.
+That is, no lazy recursive types, intersection types, function types, pick, merge, input vs output schemas, pipes, preprocess, transform etc.
 
 If all you want to do is validate forms and api payloads in a natural, typesafe way, do give pukka a try.
 

@@ -1,5 +1,5 @@
-import { describe, expect, it, test } from "vitest";
-import { Type } from "../base";
+import { describe, expect, expectTypeOf, it, test } from "vitest";
+import { type Infer, Type } from "../base";
 import { Extensions } from "../extend";
 import { type Path, registerIssues } from "../issue";
 import { pukka } from "../pukka";
@@ -66,6 +66,17 @@ describe("extend", () => {
     const a = z.string().optional();
     expect(a.isOptional).toBe(true);
     expect(a.safeParse(undefined).success).toBe(true);
+  });
+
+  test("optional/nullable has to be specified last", () => {
+    const a = z.string().min(2).description("a").optional(); // works
+    const b = z.string().optional().min(2).description("b"); // nukes optional type :(
+
+    expectTypeOf("").toMatchTypeOf<Infer<typeof a>>();
+    expectTypeOf(undefined).toMatchTypeOf<Infer<typeof a>>();
+
+    expectTypeOf("").toMatchTypeOf<Infer<typeof b>>();
+    expectTypeOf(undefined).not.toMatchTypeOf<Infer<typeof b>>();
   });
 
   it("should capture params", async () => {
