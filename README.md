@@ -475,7 +475,7 @@ export class EmailType extends types.StringType {
 
 The following adds some extension to the StringType.
 
-An extension method takes one or more parameters and returns a refinement.
+An extension method takes zero or more parameters and returns a refinement.
 
 ```ts
 import { Extensions } from "pukka";
