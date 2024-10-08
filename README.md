@@ -243,7 +243,7 @@ type Register = z.infer<typeof Register>
 type Register = {
   email: string;
   password: string;
-  passwordConfirm: string;
+  confirm: string;
 }
 */
 ```
@@ -473,40 +473,47 @@ export class EmailType extends types.StringType {
 
 ### Adding schema extensions
 
-The following adds a *min* method to the StringType.
+The following adds some extension to the StringType.
+
+An extension method takes one or more parameters and returns a refinement.
 
 ```ts
-import { type MessageOverride, types } from "pukka";
+import { Extensions } from "pukka";
 
-export class StringExtensions extends types.StringType {
-  min(length: number, override?: MessageOverride) {
-    return super.extend(
-      "min",
-      [length], // extension params for introspection
-      override,
-      (ctx, value) =>
-        value.length >= length ||
-        ctx.issue(`Value must be at least ${length} characters`),
-    );
-  }
-}
+const StringExtensions1 = Extensions.for(types.StringType, {
+  min: (length: number) => (ctx, data) =>
+    data.length >= length ||
+    ctx.issue(`Value must be at least ${length} characters`),
+  max: ...,
+  contains: ...,
+  matches: ...,
+});
+
+// or async - say check username availability
+const StringExtensions2 = Extensions.forAsync(types.StringType, {
+  username: () => async (ctx, data) => ...
+});
 ```
 
 ### Register and use the new type and extension
 
 ```ts
 
-import { applyExtensions, registerType, z as zee } from "pukka";
+import { Extensions, registerType, z as zee } from "pukka";
 
-const withStringExtensions = applyExtensions(
-  types.StringType,
-  StringExtensions,
-);
+// combine extensions for a type
+const StringExtensions = {
+  ...StringExtensions1,
+  ...StringExtensions2,
+};
+
+// and apply
+const extendedString = Extensions.apply(types.StringType, StringExtensions);
 
 export const z = {
   ...zee,
   email: registerType(EmailType),
-  string: withStringExtensions(zee.string),
+  string: extendedString(zee.string),
 };
 
 const Register = z
@@ -526,17 +533,17 @@ const Register = z
 
 The parameters passed to an extension can be retrieved in a typesafe manner.
 
-This allows extension authors to easily implement say a pukka-openapi library.
+This allows extension authors to easily implement say a `pukka-openapi` library.
 
 ```ts
 
-import { getExtensionParams } from "pukka";
+import { Extensions } from "pukka";
 
-const min = getExtensionParams(
+const min = Extensions.getParams(
   Register.properties.password,
   StringExtensions,
   "min",
-);
+); // [length: number]
 ```
 
 ## Gotchas

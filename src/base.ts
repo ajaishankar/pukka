@@ -68,8 +68,8 @@ export type CoreIssueOverrides = {
   required_error?: ValidationResultOverride;
 };
 
-export type MessageOverride = {
-  message: ValidationResultOverride;
+export type MessageOverride<T> = {
+  message: ValidationResultOverride<T>;
 };
 
 export type ParseSuccess<T> = {
@@ -533,7 +533,7 @@ export abstract class Type<T> extends BaseType {
   protected extend(
     name: keyof this,
     params: any[],
-    override: { message: ValidationResultOverride<T> } | undefined,
+    override: MessageOverride<T> | undefined,
     validator: Validator<T>,
   ) {
     return this.addExtension(false, name, params, override?.message, validator);
@@ -542,7 +542,7 @@ export abstract class Type<T> extends BaseType {
   protected extendAsync(
     name: keyof this,
     params: any[],
-    override: { message: ValidationResultOverride<T> } | undefined,
+    override: MessageOverride<T> | undefined,
     validator: AsyncValidator<T>,
   ) {
     return this.addExtension(true, name, params, override?.message, validator);

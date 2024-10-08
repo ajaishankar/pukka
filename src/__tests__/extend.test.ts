@@ -1,10 +1,12 @@
 import { describe, expect, it, test } from "vitest";
-import type { MessageOverride } from "../base";
-import { applyExtensions, getExtensionParams as params } from "../extend";
+import { Type } from "../base";
+import { Extensions } from "../extend";
 import { type Path, registerIssues } from "../issue";
 import { pukka } from "../pukka";
-import { StringType } from "../types";
+import { NumberType, StringType } from "../types";
 import { assertFail } from "./assert";
+
+const params = Extensions.getParams;
 
 const STRING_ISSUES = registerIssues({
   min_length: (length: number, path?: Path) => {
@@ -15,50 +17,43 @@ const STRING_ISSUES = registerIssues({
 
 const { min_length, username_taken } = STRING_ISSUES;
 
-class StringExtensions1 extends StringType {
-  min(length: number, override?: MessageOverride) {
-    return super.extend("min", [length], override, (ctx, value) => {
-      value.length >= length || ctx.issue(min_length(length, ctx.path));
-    });
-  }
-}
+const StringExtensions1 = Extensions.for(StringType, {
+  min: (length: number) => (ctx, value) =>
+    value.length >= length || ctx.issue(min_length(length, ctx.path)),
+});
 
-class StringExtensions2 extends StringType {
-  max(length: number, override?: MessageOverride) {
-    return super.extend("max", [length], override, (ctx, value) => {
-      return (
-        value.length <= length ||
-        ctx.issue(`Value should be less than ${length} characters long`)
-      );
-    });
-  }
-}
+const StringExtensions2 = Extensions.forAsync(StringType, {
+  username: () => async (ctx, value) =>
+    value === "homer" ? ctx.issue(username_taken(value)) : true,
+});
 
-class StringExtensions3 extends StringType {
-  username(override?: MessageOverride) {
-    return super.extendAsync("username", [], override, (ctx, value) => {
-      return Promise.resolve(
-        value === "homer" ? ctx.issue(username_taken(value)) : true,
-      );
-    });
-  }
-}
+const InvalidStringExtension = Extensions.for(StringType, {
+  optional: () => (ctx) => ctx.issue("nope"),
+});
 
-const withStringExtensions = applyExtensions(
-  StringType,
-  StringExtensions1,
-  StringExtensions2,
-  StringExtensions3,
-);
+const GenericExtension = Extensions.for(Type<unknown>, {
+  description: (desc: string) => (ctx, value) => true,
+});
+
+const StringExtensions = {
+  ...StringExtensions1,
+  ...StringExtensions2,
+  ...InvalidStringExtension,
+  ...GenericExtension,
+};
+
+const extendedString = Extensions.apply(StringType, StringExtensions);
+const extendedNumber = Extensions.apply(NumberType, GenericExtension);
 
 const z = {
   ...pukka,
-  string: withStringExtensions(pukka.string),
+  string: extendedString(pukka.string),
+  number: extendedNumber(pukka.number),
 };
 
 describe("extend", () => {
   it("should be of correct type", () => {
-    expect(z.string().min(2)).toBeInstanceOf(StringType);
+    expect(z.string().min(2).username()).toBeInstanceOf(StringType);
   });
 
   it("should clone", () => {
@@ -67,12 +62,25 @@ describe("extend", () => {
     expect(b).not.toBe(a);
   });
 
+  it("should not extend existing method", () => {
+    const a = z.string().optional();
+    expect(a.isOptional).toBe(true);
+    expect(a.safeParse(undefined).success).toBe(true);
+  });
+
   it("should capture params", async () => {
     const name = z.string().min(2);
-    expect(params(name, StringExtensions1, "min")).toEqual([2]);
-    expect(params(name, StringExtensions3, "username")).toBeUndefined();
-    const name2 = name.username();
-    expect(params(name2, StringExtensions3, "username")).toEqual([]);
+    expect(params(name, StringExtensions, "min")).toEqual([2]);
+    expect(params(name, StringExtensions, "username")).toBeUndefined();
+    const name2 = name.username().min(2);
+    expect(params(name2, StringExtensions, "username")).toEqual([]);
+  });
+
+  test("generic extension", () => {
+    const str = z.string().description("string");
+    const num = z.number().description("number");
+    expect(params(str, GenericExtension, "description")).toEqual(["string"]);
+    expect(params(num, GenericExtension, "description")).toEqual(["number"]);
   });
 
   it("should invoke extensions", async () => {

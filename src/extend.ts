@@ -1,7 +1,38 @@
-import type { BaseType, CoreIssueOverrides, MessageOverride } from "./base";
+import type {
+  AsyncValidator,
+  BaseType,
+  CoreIssueOverrides,
+  Infer,
+  MessageOverride,
+  Validator,
+} from "./base";
 import { internalType } from "./internal";
 
 type TypeConstructor<T extends BaseType = BaseType> = new (...args: any[]) => T;
+
+type AbstractTypeConstructor<T extends BaseType = BaseType> = abstract new (
+  ...args: any[]
+) => T;
+
+type SyncExtensions<T> = {
+  [name: string]: (...args: any[]) => Validator<T>;
+};
+
+type AsyncExtensions<T> = {
+  [name: string]: (...args: any[]) => AsyncValidator<T>;
+};
+
+type Extensions<T> = {
+  [name: string]: ((...args: any[]) => Validator<T> | AsyncValidator<T>) & {
+    async: boolean;
+  };
+};
+
+export type Extended<T extends BaseType, X extends Extensions<Infer<T>>> = T & {
+  [K in Exclude<keyof X, keyof T>]: (
+    ...args: [...Parameters<X[K]>, override?: MessageOverride<Infer<T>>]
+  ) => Extended<T, X>;
+};
 
 /**
  * Helper to register a type with a constructor taking a single object parameter
@@ -17,84 +48,102 @@ export function registerType<T extends BaseType, C extends new (arg: any) => T>(
     (new ctor(param) as I).issues(param);
 }
 
-export type Extended<R> = <F extends (...args: any[]) => any>(
-  fn: F,
-) => (...args: Parameters<F>) => R;
-
-/**
- * Get an extension's parameters for codegen tools say pukka-openapi
- * ```ts
- * const s = z.string().minLength(2)
- * expect(getExtensionParams(s, StringExtensions, "minLength")).toEqual([2])
- * ```
- */
-export function getExtensionParams<
-  X extends TypeConstructor,
-  M extends Exclude<
-    keyof InstanceType<X>,
-    keyof BaseType | "refine" | "refineAsync"
-  >,
->(type: BaseType, ctor: X, name: M) {
-  type O = MessageOverride;
-  type T = InstanceType<X>;
-  type P = T[M] extends (...args: any[]) => any ? Parameters<T[M]> : never;
-  type R = Required<P> extends [...infer H, infer L extends O] ? H : P;
-  return internalType(type).getExtensionParams(name as string) as R | undefined;
+function extensions<
+  T extends BaseType,
+  C extends AbstractTypeConstructor<T>,
+  X extends SyncExtensions<Infer<InstanceType<C>>>,
+>(ctor: C, extensions: X) {
+  for (const x of Object.values(extensions)) {
+    (x as any).async = false;
+  }
+  return extensions as {
+    [K in keyof X]: X[K] & { async: false };
+  };
 }
 
-/**
- * Apply extensions to a type, this updates the type's prototype
- * ```ts
- * const extendedString = applyExtensions(StringType, StringExtensions);
- * const x = {
- *   ...z,
- *   string: extendedString(z.string),
- * };
- * const s = x.string().minLength(2) // minLength from StringExtensions
- * ```
- */
-export function applyExtensions<B extends TypeConstructor, X1 extends B>(
-  Base: B,
-  Ext1: X1,
-): Extended<InstanceType<B> & InstanceType<X1>>;
-export function applyExtensions<
-  B extends TypeConstructor,
-  X1 extends B,
-  X2 extends B,
->(
-  Base: B,
-  Ext1: X1,
-  Ext2: X2,
-): Extended<InstanceType<B> & InstanceType<X1> & InstanceType<X2>>;
-export function applyExtensions<
-  B extends TypeConstructor,
-  X1 extends B,
-  X2 extends B,
-  X3 extends B,
->(
-  Base: B,
-  Ext1: X1,
-  Ext2: X2,
-  Ext3: X3,
-): Extended<
-  InstanceType<B> & InstanceType<X1> & InstanceType<X2> & InstanceType<X3>
->;
-export function applyExtensions<B extends TypeConstructor>(
-  Base: B,
-  ...extensions: any[]
-) {
-  for (const ext of extensions) {
-    const ctorProps = Object.getOwnPropertyDescriptors(Base.prototype);
-    for (const name of Object.getOwnPropertyNames(ext.prototype)) {
-      if (!ctorProps[name]) {
-        Object.defineProperty(
-          Base.prototype,
-          name,
-          Object.getOwnPropertyDescriptor(ext.prototype, name)!,
-        );
-      }
+function asyncExtensions<
+  T extends BaseType,
+  C extends AbstractTypeConstructor<T>,
+  X extends AsyncExtensions<Infer<InstanceType<C>>>,
+>(ctor: C, extensions: X) {
+  for (const x of Object.values(extensions)) {
+    (x as any).async = true;
+  }
+  return extensions as {
+    [K in keyof X]: X[K] & { async: true };
+  };
+}
+
+function applyExtensions<
+  T extends BaseType,
+  C extends TypeConstructor<T>,
+  X extends Extensions<Infer<InstanceType<C>>>,
+>(ctor: C, extensions: X) {
+  const descriptors = new Set<string>();
+  let proto = ctor.prototype;
+  while (proto) {
+    for (const name of Object.getOwnPropertyNames(proto)) {
+      descriptors.add(name);
     }
+    proto = Object.getPrototypeOf(proto);
   }
 
-  return (fn: any) => fn as any;
+  for (const [name, fn] of Object.entries(extensions)) {
+    if (descriptors.has(name)) {
+      continue;
+    }
+    Object.defineProperty(ctor.prototype, name, {
+      value: function (this: any, ...args: any[]) {
+        const lastArg = args[args.length - 1];
+        const hasOverride = lastArg?.message != null;
+        const override = hasOverride ? lastArg : undefined;
+        const params = hasOverride ? args.slice(0, -1) : args;
+        const validator = fn(...params);
+        if (fn.async) {
+          return this.extendAsync(name, params, override, validator);
+        }
+        return this.extend(name, params, override, validator);
+      },
+    });
+  }
+
+  type I = InstanceType<C>;
+  type Ext = Extended<I, X>;
+
+  return <F extends (...args: any[]) => I>(fn: F) =>
+    fn as (...args: Parameters<F>) => I & Ext;
 }
+
+function getExtensionParams<
+  T extends BaseType,
+  X extends Extensions<Infer<T>>,
+  M extends keyof X,
+>(type: T, ext: X, name: M) {
+  type P = Parameters<X[M]>;
+  return internalType(type).getExtensionParams(name as string) as P | undefined;
+}
+
+export const Extensions = {
+  for: extensions,
+  forAsync: asyncExtensions,
+  /**
+   * Apply extensions to a type, this updates the type's prototype
+   * ```ts
+   * const extendedString = Extensions.apply(StringType, StringExtensions);
+   * const x = {
+   *   ...z,
+   *   string: extendedString(z.string),
+   * };
+   * const s = x.string().min(2) // min from StringExtensions
+   * ```
+   */
+  apply: applyExtensions,
+  /**
+   * Get an extension's parameters for codegen tools say pukka-openapi
+   * ```ts
+   * const s = z.string().min(2)
+   * expect(getExtensionParams(s, StringExtensions, "min")).toEqual([2])
+   * ```
+   */
+  getParams: getExtensionParams,
+};
