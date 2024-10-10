@@ -418,7 +418,7 @@ const data = DeepObject.fromEntries(form);
 data = { addresses: [{ state: "TX" }, { state: "CA" }] };
 ```
 
-### toParsedInput(data: unknown)
+### toParsedInput<T>(data: T)
 
 Convert valid data to parsed input, useful when rendering forms.
 
@@ -473,7 +473,7 @@ export class EmailType extends types.StringType {
 
 ### Adding schema extensions
 
-The following adds some extension to the StringType.
+The following adds some extensions to the StringType.
 
 An extension method takes zero or more parameters and returns a refinement.
 
@@ -517,6 +517,7 @@ export const z = {
 const Register = z
   .object({
     email: z.email(),
+    username: z.string().username({ message: "That name is taken" })
     password: z.string().min(8),
     confirm: z.string(),
   })
