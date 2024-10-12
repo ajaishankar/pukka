@@ -319,18 +319,28 @@ describe("ObjectType", () => {
   const objectType = new ObjectType({
     name: new StringType(),
     age: new NumberType(),
+    address: new ObjectType({
+      street: new StringType(),
+    }),
   });
 
+  const validInput = {
+    name: "homer",
+    age: 42,
+    foo: "bar",
+    address: { street: "123 some st" },
+  };
+
   it("should parse object", () => {
-    const result = objectType.safeParse({ name: "homer", age: 42 });
+    const result = objectType.safeParse(validInput);
     expect(result.success).toBe(true);
-    expect(result.data).toEqual({ name: "homer", age: 42 });
+    expect(result.data).toEqual(validInput);
   });
 
   it("should remove extra keys", () => {
-    const result = objectType.safeParse({ name: "homer", age: 42, foo: "bar" });
+    const result = objectType.safeParse({ ...validInput, foo: "bar" });
     expect(result.success).toBe(true);
-    expect(result.data).toEqual({ name: "homer", age: 42 });
+    expect(result.data).toEqual(validInput);
   });
 
   it("should return error on invalid object", () => {
@@ -347,7 +357,11 @@ describe("ObjectType", () => {
   });
 
   it("should return error on invalid object properties", () => {
-    const result = objectType.safeParse({ name: "homer", age: "unknown" });
+    const result = objectType.safeParse({
+      name: "homer",
+      age: "unknown",
+      address: {},
+    });
     assertFail(result);
     expect(result.issues.length).toBeGreaterThan(0);
     expect(result.issues).toEqual([
@@ -355,6 +369,11 @@ describe("ObjectType", () => {
         path: ["age"],
         code: "invalid_type",
         message: "Expected: number, Received: unknown",
+      },
+      {
+        path: ["address", "street"],
+        code: "required",
+        message: "Value is required, Received 'undefined'",
       },
     ]);
   });
