@@ -212,12 +212,14 @@ function coerce(input: unknown, type: PrimitiveType | "array" | "object") {
 
   if (type === "number") {
     if (typeof input === "number") return input;
+    if (typeof input === "string" && !input.length) return undefined;
     const value = Number(input);
     return Number.isNaN(value) ? undefined : value;
   }
 
   if (type === "bigint") {
     if (typeof input === "bigint") return input;
+    if (typeof input === "string" && !input.length) return undefined;
     try {
       return BigInt(input as any);
     } catch {

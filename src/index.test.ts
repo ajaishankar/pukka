@@ -150,7 +150,7 @@ test("validate object with encoded keys (hono/validator)", () => {
   expect(errors).toEqual({});
 });
 
-test("validate error case with runtime context", () => {
+test("validate with runtime context (error)", () => {
   const { success, data, errors } = validateWithCtx(input, {
     allowedStrings: ["foo", "bar"],
   });
@@ -164,7 +164,7 @@ test("validate error case with runtime context", () => {
   });
 });
 
-test("validate success case with runtime context", () => {
+test("validate with runtime context (success)", () => {
   const { success, data, errors } = validateWithCtx(input, {
     allowedStrings: ["string"],
   });
@@ -315,6 +315,22 @@ describe("errors", () => {
     });
   });
 
+  it("should not treat empty string as valid number", () => {
+    const { success, errors } = validate({ number: "" });
+    expect(success).toBe(false);
+    expect(errors.number?.errors).toEqual([
+      "Expected 'number', received 'string'",
+    ]);
+  });
+
+  it("should not treat empty string as valid bigint", () => {
+    const { success, errors } = validate({ bigint: "" });
+    expect(success).toBe(false);
+    expect(errors.bigint?.errors).toEqual([
+      "Expected 'bigint', received 'string'",
+    ]);
+  });
+
   test("aliased field error value (#3)", () => {
     const validate = validator.for(schema, (data, issues) => {
       issues.alias.push("alias error");
@@ -388,6 +404,7 @@ test("form helper", () => {
 describe("callback", () => {
   const input = {
     object: {
+      a: "42",
       b: {
         d: [null],
       },
@@ -410,7 +427,7 @@ describe("callback", () => {
       bigint: 0n,
       array: [],
       object: {
-        a: 0,
+        a: 42, // should still populate valid value
         b: {
           c: "",
           d: [{ e: "" }],
@@ -558,7 +575,7 @@ test.each([
   [undefined, "undefined"],
   [[], "array"],
   [new (class Foo {})(), "Foo"],
-])("validate with bad source (%o)", (input, received) => {
+])("validate with bad input source (%o)", (input, received) => {
   const { success, errors } = validate(input);
   expect(success).toBe(false);
   expect(errors).toEqual({
