@@ -1,6 +1,6 @@
 {
   "name": "pukka",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "Delightfully simple TypeScript validation",
   "repository": {
     "type": "git",

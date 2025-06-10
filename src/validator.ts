@@ -191,11 +191,6 @@ function coerce(input: unknown, type: PrimitiveType | "array" | "object") {
     return Array.isArray(input) ? input : [input];
   }
 
-  // if expecting primitive coerce array with single element
-  if (Array.isArray(input) && input.length === 1) {
-    input = input[0];
-  }
-
   if (type === "string") {
     return typeof input === "string" ? input : String(input);
   }
@@ -424,7 +419,11 @@ function validate(
 const entries = (input: object | FormData | URLSearchParams) => {
   if (input instanceof FormData || input instanceof URLSearchParams) {
     const keys = Array.from(new Set(input.keys())); // unique keys
-    return keys.map((key) => [key, input.getAll(key)] as const); // ?hobbies=reading&hobbies=coding
+    return keys.map((key) => {
+      const value = input.getAll(key); // ?hobbies=reading&hobbies=coding
+      // if only one value, don't return array
+      return [key, value.length === 1 ? value[0] : value] as const;
+    });
   }
   return Object.entries(input);
 };

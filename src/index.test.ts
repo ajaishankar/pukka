@@ -51,6 +51,14 @@ formdata.append("object.b.c", "c");
 formdata.append("object.b.d[0].e", "e");
 formdata.append("aka", "jdoe");
 
+const cloneFormData = () => {
+  const clone = new FormData();
+  for (const [key, value] of formdata.entries()) {
+    clone.append(key, value);
+  }
+  return clone;
+};
+
 const urlSearchParams = new URLSearchParams([
   ["string", "string"],
   ["number", "1"],
@@ -64,6 +72,14 @@ const urlSearchParams = new URLSearchParams([
   ["object.b.d[0].e", "e"],
   ["aka", "jdoe"],
 ]);
+
+const cloneUrlSearchParams = () => {
+  const clone = new URLSearchParams();
+  for (const [key, value] of urlSearchParams.entries()) {
+    clone.append(key, value);
+  }
+  return clone;
+};
 
 const invalid = {
   number: {},
@@ -232,25 +248,84 @@ test("data type on error has all schema fields optional", () => {
   }
 });
 
-describe("string handling", () => {
-  it("should trim strings if trim is true", () => {
-    const { success, data } = validate(
-      { ...input, string: "  is trimmed  " },
-      { string: { trim: true } },
-    );
-    expect(success).toBe(true);
-    expect(data?.string).toBe("is trimmed");
+describe("strings", () => {
+  describe("it should trim strings if trim is true", () => {
+    test("object", () => {
+      const { success, data } = validate(
+        { ...input, string: "  is trimmed  " },
+        { string: { trim: true } },
+      );
+      expect(success).toBe(true);
+      expect(data?.string).toBe("is trimmed");
+    });
+
+    test("formdata", () => {
+      const clone = cloneFormData();
+      clone.set("string", "  is trimmed  ");
+
+      const { success, data } = validate(clone, { string: { trim: true } });
+
+      expect(success).toBe(true);
+      expect(data?.string).toBe("is trimmed");
+    });
+
+    test("url search params", () => {
+      const clone = cloneUrlSearchParams();
+      clone.set("string", "  is trimmed  ");
+
+      const { file, ...query } = schema;
+      const validate = validator.for(query);
+
+      const { success, data, errors } = validate(clone, {
+        string: { trim: true },
+      });
+
+      expect(success).toBe(true);
+      expect(data?.string).toBe("is trimmed");
+    });
   });
 
-  it("should reject empty strings if allowEmpty is false", () => {
-    const { success, errors } = validate(
-      { ...input, string: "  " },
-      { string: { trim: true, allowEmpty: false } },
-    );
-    expect(success).toBe(false);
-    expect(errors?.string).toEqual({
-      value: "",
-      errors: ["String is required"],
+  describe("should reject empty strings if allowEmpty is false", () => {
+    test("object", () => {
+      const { success, errors } = validate(
+        { ...input, string: "  " },
+        { string: { trim: true, allowEmpty: false } },
+      );
+      expect(success).toBe(false);
+      expect(errors?.string).toEqual({
+        value: "",
+        errors: ["String is required"],
+      });
+    });
+
+    test("formdata", () => {
+      const clone = cloneFormData();
+      clone.set("string", "  ");
+
+      const { success, errors } = validate(clone, {
+        string: { trim: true, allowEmpty: false },
+      });
+
+      expect(success).toBe(false);
+      expect(errors?.string).toEqual({
+        value: "",
+        errors: ["String is required"],
+      });
+    });
+
+    test("url search params", () => {
+      const clone = cloneUrlSearchParams();
+      clone.set("string", "  ");
+
+      const { success, errors } = validate(clone, {
+        string: { trim: true, allowEmpty: false },
+      });
+
+      expect(success).toBe(false);
+      expect(errors?.string).toEqual({
+        value: "",
+        errors: ["String is required"],
+      });
     });
   });
 });
