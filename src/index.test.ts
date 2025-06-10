@@ -236,7 +236,7 @@ describe("string handling", () => {
   it("should trim strings if trim is true", () => {
     const { success, data } = validate(
       { ...input, string: "  is trimmed  " },
-      { stringHandling: { trim: true } },
+      { string: { trim: true } },
     );
     expect(success).toBe(true);
     expect(data?.string).toBe("is trimmed");
@@ -245,7 +245,7 @@ describe("string handling", () => {
   it("should reject empty strings if allowEmpty is false", () => {
     const { success, errors } = validate(
       { ...input, string: "  " },
-      { stringHandling: { trim: true, allowEmpty: false } },
+      { string: { trim: true, allowEmpty: false } },
     );
     expect(success).toBe(false);
     expect(errors?.string).toEqual({

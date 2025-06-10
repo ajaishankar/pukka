@@ -324,7 +324,7 @@ function validate(
 
   let input = isRoot ? source : source[alias ?? key];
 
-  if (typeof input === "string" && options.stringHandling?.trim === true) {
+  if (typeof input === "string" && options.string?.trim === true) {
     input = input.trim();
   }
 
@@ -332,7 +332,7 @@ function validate(
 
   if (
     input == null ||
-    (isEmptyString && options.stringHandling?.allowEmpty === false)
+    (isEmptyString && options.string?.allowEmpty === false)
   ) {
     if (!optional) {
       addError(

@@ -145,7 +145,7 @@ Strings can be trimmed, and empty strings can be rejected
 
 ```ts
 const { success, data } = validate(form, {
-  stringHandling: {
+  string: {
     trim: true,
     allowEmpty: false
   };
