@@ -232,6 +232,29 @@ test("data type on error has all schema fields optional", () => {
   }
 });
 
+describe("string handling", () => {
+  it("should trim strings if trim is true", () => {
+    const { success, data } = validate(
+      { ...input, string: "  is trimmed  " },
+      { stringHandling: { trim: true } },
+    );
+    expect(success).toBe(true);
+    expect(data?.string).toBe("is trimmed");
+  });
+
+  it("should reject empty strings if allowEmpty is false", () => {
+    const { success, errors } = validate(
+      { ...input, string: "  " },
+      { stringHandling: { trim: true, allowEmpty: false } },
+    );
+    expect(success).toBe(false);
+    expect(errors?.string).toEqual({
+      value: "",
+      errors: ["String is required"],
+    });
+  });
+});
+
 describe("errors", () => {
   it("should return failure", () => {
     const { success } = validate({ ...invalid, extra: true });

@@ -129,6 +129,8 @@ form.append("hobbies[1]", "coding")
 const { success, data } = validate(form)
 ```
 
+## 🛠️ Validation options
+
 As with the `qs` package, an arrayLimit can be set for arrays
 
 This is to prevent someone from sending `hobbies[999999999]=cpu-hogging`
@@ -136,6 +138,17 @@ This is to prevent someone from sending `hobbies[999999999]=cpu-hogging`
 ```ts
 const { success, data } = validate(form, {
   arrayLimit: 100 // default is 50
+})
+```
+
+Strings can be trimmed, and empty strings can be rejected
+
+```ts
+const { success, data } = validate(form, {
+  stringHandling: {
+    trim: true,
+    allowEmpty: false
+  };
 })
 ```
 

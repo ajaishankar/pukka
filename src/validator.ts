@@ -322,9 +322,18 @@ function validate(
   const errorMessage = options.errorMessage;
   const arrayLimit = options.arrayLimit ?? DEFAULT_ARRAY_LIMIT;
 
-  const input = isRoot ? source : source[alias ?? key];
+  let input = isRoot ? source : source[alias ?? key];
 
-  if (input == null) {
+  if (typeof input === "string" && options.stringHandling?.trim === true) {
+    input = input.trim();
+  }
+
+  const isEmptyString = typeof input === "string" && !input.length;
+
+  if (
+    input == null ||
+    (isEmptyString && options.stringHandling?.allowEmpty === false)
+  ) {
     if (!optional) {
       addError(
         errors,

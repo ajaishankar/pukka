@@ -167,6 +167,10 @@ export type ErrorMessageOverride<S extends Schema> = <
 
 export type ValidatorOptions<S extends Schema> = {
   arrayLimit?: number;
+  stringHandling?: {
+    trim?: boolean;
+    allowEmpty?: boolean;
+  };
   errorMessage?: ErrorMessageOverride<S>;
 };
 
