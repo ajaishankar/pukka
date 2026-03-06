@@ -51,6 +51,19 @@ formdata.append("object.b.c", "c");
 formdata.append("object.b.d[0].e", "e");
 formdata.append("aka", "jdoe");
 
+class FormDataLike {
+  constructor(private data: FormData) {}
+  keys() {
+    return this.data.keys();
+  }
+  get(name: string) {
+    return this.data.get(name);
+  }
+  getAll(name: string) {
+    return this.data.getAll(name);
+  }
+}
+
 const cloneFormData = () => {
   const clone = new FormData();
   for (const [key, value] of formdata.entries()) {
@@ -137,6 +150,16 @@ test("validate url search params", () => {
   const { success, data, errors } = validate(urlSearchParams);
 
   const { aka, file: _, ...rest } = input;
+
+  expect(success).toBe(true);
+  expect(data).toStrictEqual({ ...rest, optional: undefined, alias: "jdoe" });
+  expect(errors).toEqual({});
+});
+
+test("validate form data like", () => {
+  const { success, data, errors } = validate(new FormDataLike(formdata));
+
+  const { aka, ...rest } = input;
 
   expect(success).toBe(true);
   expect(data).toStrictEqual({ ...rest, optional: undefined, alias: "jdoe" });

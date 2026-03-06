@@ -416,8 +416,17 @@ function validate(
   }
 }
 
+// jsdom formdata is different from node formdata
+// so also do duck-type check
+const isFormDataLike = (input: any): input is FormData | URLSearchParams =>
+  input instanceof FormData ||
+  input instanceof URLSearchParams ||
+  (typeof input?.keys === "function" &&
+    typeof input?.get === "function" &&
+    typeof input?.getAll === "function");
+
 const entries = (input: object | FormData | URLSearchParams) => {
-  if (input instanceof FormData || input instanceof URLSearchParams) {
+  if (isFormDataLike(input)) {
     const keys = Array.from(new Set(input.keys())); // unique keys
     return keys.map((key) => {
       const value = input.getAll(key); // ?hobbies=reading&hobbies=coding
@@ -429,11 +438,7 @@ const entries = (input: object | FormData | URLSearchParams) => {
 };
 
 function normalizeInput(input: unknown) {
-  if (
-    !isObject(input) &&
-    !(input instanceof FormData) &&
-    !(input instanceof URLSearchParams)
-  ) {
+  if (!isObject(input) && !isFormDataLike(input)) {
     return input;
   }
   const source = {};
