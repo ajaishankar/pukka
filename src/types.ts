@@ -109,7 +109,8 @@ export type FormHelper<T> = T extends Primitive
       path: string;
     }
   : T extends any[]
-    ? { [K: number]: FormHelper<T[number]> } & {
+    ? {
+        [K: number]: FormHelper<T[number]>;
         length: number;
         [Symbol.iterator](): Iterator<FormHelper<T[number]>>;
         errors: string[];

@@ -38,11 +38,10 @@ export const addError = (
 };
 
 export const form = {
-  helper: <Data extends Record<string, unknown>>({
-    data,
-    errors,
-  }: Omit<ValidationResult<Data>, "success">) => {
-    return proxy(data, errors) as FormHelper<Data>;
+  helper: <Data extends Record<string, unknown>>(
+    result?: Omit<ValidationResult<Data>, "success">,
+  ) => {
+    return proxy(result?.data ?? {}, result?.errors) as FormHelper<Data>;
   },
 };
 
